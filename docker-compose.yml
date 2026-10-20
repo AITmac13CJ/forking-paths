@@ -1,0 +1,20 @@
+services:
+  postgres:
+    image: postgres:17-alpine
+    container_name: gamelog-postgres
+    environment:
+      POSTGRES_USER: gamelog
+      POSTGRES_PASSWORD: gamelog
+      POSTGRES_DB: gamelog
+    ports:
+      - "5433:5432"
+    volumes:
+      - gamelog-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U gamelog -d gamelog"]
+      interval: 2s
+      timeout: 5s
+      retries: 30
+
+volumes:
+  gamelog-data:

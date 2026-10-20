@@ -1,0 +1,41 @@
+name: forking-paths
+
+services:
+  postgres:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: garden
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: garden
+    volumes:
+      - garden-pg:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U garden -d garden"]
+      interval: 2s
+      timeout: 5s
+      retries: 30
+
+  garden:
+    build:
+      context: .
+    image: forking-paths-garden
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    user: "${GARDEN_UID}:${GARDEN_GID}"
+    environment:
+      DATABASE_URL: postgres://garden:${POSTGRES_PASSWORD}@postgres:5432/garden?sslmode=disable
+      PORT: "8080"
+      GARDEN_SEED: "0"
+      XBOX_CLIENT_ID: ${XBOX_CLIENT_ID:-}
+      XBOX_CLIENT_SECRET: ${XBOX_CLIENT_SECRET:-}
+      STEAM_WEB_API_KEY: ${STEAM_WEB_API_KEY:-}
+    ports:
+      - "8091:8080"
+    volumes:
+      - ../covers:/app/frontend/public/covers
+
+volumes:
+  garden-pg:
